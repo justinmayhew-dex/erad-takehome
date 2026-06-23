@@ -4,7 +4,7 @@ def analyze_revenue(df: pd.DataFrame):
     outflows = df[df['amount'] < 0].copy()
     inflows = df[df['amount'] > 0].copy()
     
-   if outflows.empty or inflows.empty:
+    if outflows.empty or inflows.empty:
         return {
             "total_inflows": 0.0, 
             "total_outflows": 0.0, 
@@ -36,6 +36,7 @@ def analyze_revenue(df: pd.DataFrame):
     
     abs_mean_out = abs(monthly_mean_out)
     cv_out = (monthly_std_out / abs_mean_out) if abs_mean_out > 0 else 999.0
+    
     
 
 
