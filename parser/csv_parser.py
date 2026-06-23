@@ -1,11 +1,14 @@
+import logging
 import pandas as pd
 import os
 
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+
 def parse_csv_statement(raw_path, processed_path, args):
-  print('Mock Parsing...') 
+  logging.warning('Mock Parsing...') 
   df = load_csv(raw_path, args)
   df = clean_csv(df)
-  print(df) 
+  logging.warning(df) 
   save_clean(df, processed_path)
   return df
 
@@ -31,7 +34,7 @@ def clean_csv(df):
         if failed_date_mask.any():
             corrupted_dates = df[failed_date_mask]
             for idx, row in corrupted_dates.iterrows():
-                print(
+                logging.warning(
                     f"Parsing Failure in column 'date' at CSV Row {idx + 2}: "
                     f"Could not convert raw date '{row['date']}' to a standard timestamp."
                 )
@@ -76,10 +79,10 @@ def save_clean(df, processed_path):
             
         # Write to the destination path
         df.to_csv(processed_path, index=False)
-        print(f"Successfully wrote clean statement data to: {processed_path}")
+        logging.warning(f"Successfully wrote clean statement data to: {processed_path}")
         
     except IOError as e:
-        print(f"File System Error: Failed to write output to {processed_path}. Details: {e}")
+        logging.warning(f"File System Error: Failed to write output to {processed_path}. Details: {e}")
 
     except Exception as e:
-        print(f"Unexpected error while exporting data: {e}")
+        logging.warning(f"Unexpected error while exporting data: {e}")
