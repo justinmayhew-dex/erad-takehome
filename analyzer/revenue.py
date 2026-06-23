@@ -36,9 +36,26 @@ def analyze_revenue(df: pd.DataFrame):
     
     abs_mean_out = abs(monthly_mean_out)
     cv_out = (monthly_std_out / abs_mean_out) if abs_mean_out > 0 else 999.0
-    
-    
 
+    df_time = df.copy()
+    df_time['month_period'] = df_time['date'].dt.to_period('M')
+    
+    monthly_timeline = []
+    for month, group in df_time.groupby('month_period', sort=True):
+        inflows_m = group[group['amount'] > 0]['amount'].sum()
+        outflows_m = group[group['amount'] < 0]['amount'].sum()
+        net_flow = inflows_m + outflows_m
+        
+        # Grab the real closing balance at the end of the sorted group
+        eom_balance = group['balance_after'].iloc[-1]
+        
+        monthly_timeline.append({
+            "month": str(month),
+            "total_inflows": float(inflows_m),
+            "total_outflows": float(outflows_m),
+            "net_flow": float(net_flow),
+            "end_of_month_balance": float(eom_balance)
+        })
 
     return {
         "total_inflows": total_inflows,
@@ -46,7 +63,8 @@ def analyze_revenue(df: pd.DataFrame):
         "average_monthly_inflow": float(monthly_mean_in),
         "average_monthly_outflow": float(monthly_mean_out),
         "coefficient_of_inflow_variation": round(cv_in, 3),
-        "coefficient_of_outflow_variation": round(cv_out, 3)
+        "coefficient_of_outflow_variation": round(cv_out, 3),
+        "timeline": monthly_timeline
     }
 
 
