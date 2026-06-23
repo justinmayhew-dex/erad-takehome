@@ -8,6 +8,7 @@ def analyze_revenue(df: pd.DataFrame):
         
     total_revenue = float(inflows['amount'].sum())
     print(inflows['date']) 
+
     # Group by month using the index/date
     inflows['month'] = inflows['date'].dt.to_period('M')
     monthly_sums = inflows.groupby('month')['amount'].sum()
@@ -17,11 +18,8 @@ def analyze_revenue(df: pd.DataFrame):
     monthly_std = monthly_sums.std() if len(monthly_sums) > 1 else 0.0
     cv = (monthly_std / monthly_mean) if monthly_mean > 0 else 999.0
     
-    stability = "High" if cv < 0.2 else "Moderate" if cv < 0.5 else "Low"
-
     return {
         "total_revenue_detected": total_revenue,
         "average_monthly_revenue": float(monthly_mean),
-        "revenue_stability_rating": stability,
         "coefficient_of_variation": round(cv, 3)
     }
