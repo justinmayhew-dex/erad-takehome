@@ -5,7 +5,7 @@ from parser.csv_parser import parse_csv_statement
 from analyzer.revenue import analyze_revenue
 from analyzer.risk_flags import detect_risk_flags
 from analyzer.runway import calculate_stressed_runway 
-
+from analyzer.analysis import calculate_credit_score
 def main(): 
     parser = argparse.ArgumentParser(description="Generate Credit Report")
     parser.add_argument('--file', required=True, help="Filename inside /data/raw")
@@ -26,10 +26,8 @@ def main():
     revenue_analysis = analyze_revenue(df)
     risk_flag_analysis = detect_risk_flags(df)
     runway_analysis = calculate_stressed_runway(df)
-
-    print(revenue_analysis)
-    print(risk_flag_analysis)
-    print(runway_analysis)
+    
+    print(calculate_credit_score(revenue_analysis, risk_flag_analysis, runway_analysis))
 
 if __name__ == "__main__":
     main()
