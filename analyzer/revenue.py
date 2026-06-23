@@ -4,11 +4,17 @@ def analyze_revenue(df: pd.DataFrame):
     outflows = df[df['amount'] < 0].copy()
     inflows = df[df['amount'] > 0].copy()
     
-    if outflows.empty:
-        return {"total_inflows": 0.0, "total_outflows": 0.0, "monthly_average": 0.0, "confidence_score": "Low"}
-    if inflows.empty:
-        return {"total_inflows": 0.0, "total_outflows": 0.0, "monthly_average": 0.0, "confidence_score": "Low"}
-        
+   if outflows.empty or inflows.empty:
+        return {
+            "total_inflows": 0.0, 
+            "total_outflows": 0.0, 
+            "average_monthly_inflow": 0.0, 
+            "average_monthly_outflow": 0.0, 
+            "coefficient_of_inflow_variation": 999.0, 
+            "coefficient_of_outflow_variation": 999.0,
+            "monthly_timeline": []
+        }
+
     total_inflows = float(inflows['amount'].sum())
     total_outflows = float(outflows['amount'].sum())
 
@@ -34,6 +40,7 @@ def analyze_revenue(df: pd.DataFrame):
     cv_out = (monthly_std_out / abs_mean_out) if abs_mean_out > 0 else 999.0
     
 
+
     return {
         "total_inflows": total_inflows,
         "total_outflows": total_outflows,
@@ -42,3 +49,5 @@ def analyze_revenue(df: pd.DataFrame):
         "coefficient_of_inflow_variation": round(cv_in, 3),
         "coefficient_of_outflow_variation": round(cv_out, 3)
     }
+
+
