@@ -5,36 +5,36 @@ def calculate_credit_score(revenue_data: dict, risk_data: dict, runway_data: dic
     Calculates a credit risk score from 100 down to 0 using an absolute 
     deduction penalty matrix based on underlying banking metrics.
     """
-    score = 100.0
+    score = 0.0
     penalties = {}
 
     # --- 1. NSF EVENTS PENALTY MATRIX (Max Deduct: 35) ---
     nsf_count = risk_data["risk_assessment"]["nsf_count"]
     if nsf_count == 0:
-        nsf_deduction = 0
+        nsf_score = 25
     elif 1 <= nsf_count <= 2:
-        nsf_deduction = 15
+        nsf_score = 15
     elif 3 <= nsf_count <= 4:
-        nsf_deduction = 25
+        nsf_score = 5
     else:  # 5+ NSFs
-        nsf_deduction = 35
+        nsf_score = 0
     
-    score -= nsf_deduction
-    penalties["nsf_events_penalty"] = -nsf_deduction
+    score += nsf_score
+    penalties["nsf_events_penalty"] = 25 - nsf_score
 
     # --- 2. STRESSED RUNWAY PENALTY MATRIX (Max Deduct: 25) ---
     stressed_runway = runway_data["stress_test_metrics"]["stressed_runway_months"]
     if stressed_runway >= 6.0:
-        runway_deduction = 0
+        runway_score = 20
     elif 3.0 <= stressed_runway < 6.0:
-        runway_deduction = 8
+        runway_score = 14
     elif 1.0 <= stressed_runway < 3.0:
-        runway_deduction = 16
+        runway_score = 7
     else:  # < 1 Month
-        runway_deduction = 25
+        runway_score = 0
 
-    score -= runway_deduction
-    penalties["stressed_runway_penalty"] = -runway_deduction
+    score += runway_score
+    penalties["stressed_runway_penalty"] = 20 - runway_score
 
     # --- 3. NEGATIVE CASHFLOW MONTHS PENALTY MATRIX (Max Deduct: 20) ---
     # Extract net monthly flows from the timeline to see how many months are negative
@@ -42,16 +42,16 @@ def calculate_credit_score(revenue_data: dict, risk_data: dict, runway_data: dic
     neg_months_count = sum(1 for month in timeline if month.get("net_flow", 0) < 0)
     
     if neg_months_count == 0:
-        cashflow_deduction = 0
+        cashflow_score = 15
     elif neg_months_count == 1:
-        cashflow_deduction = 7
+        cashflow_score = 10
     elif neg_months_count == 2:
-        cashflow_deduction = 13
+        cashflow_score = 5
     else:  # 3+ Months
-        cashflow_deduction = 20
+        cashflow_score = 0
 
-    score -= cashflow_deduction
-    penalties["negative_cashflow_months_penalty"] = -cashflow_deduction
+    score += cashflow_score
+    penalties["negative_cashflow_months_penalty"] = 15 - cashflow_score
 
     # --- 4. SUSTAINED LOW BALANCE PENALTY MATRIX (Max Deduct: 10) ---
     # Captures risk if the minimum balance drops below a threshold or if low balance days count spikes
@@ -60,14 +60,14 @@ def calculate_credit_score(revenue_data: dict, risk_data: dict, runway_data: dic
     
     # Trigger if they actively spent time below a 5,000 baseline or if absolute minimum is critically low
     if low_balance_days >= 2 or min_balance < 5000:
-        low_balance_deduction = 10
+        low_balance_score = 0
     elif low_balance_days == 1:
-        low_balance_deduction = 5
+        low_balance_score = 5
     else:
-        low_balance_deduction = 0
+        low_balance_score = 10
 
-    score -= low_balance_deduction
-    penalties["low_balance_cushion_penalty"] = -low_balance_deduction
+    score += low_balance_score
+    penalties["low_balance_cushion_penalty"] = 10 - low_balance_score
 
     # --- 5. LATE/SKIPPED SALARY PAYMENTS MATRIX (Weighted Heavily - Max Deduct: 30) ---
     # Weight distribution: Skipped months are absolute auto-fails, late months are highly penalized.
@@ -75,18 +75,17 @@ def calculate_credit_score(revenue_data: dict, risk_data: dict, runway_data: dic
     total_skipped = salary_report.get("total_skipped_months", 0)
     total_late = salary_report.get("total_late_months", 0)
     
-    salary_deduction = 0
+    salary_score = 30
     if total_skipped > 0:
-        salary_deduction += 20  # Immediate massive penalty for missing a full payroll cycle
+        salary_score -= 20  # Immediate massive penalty for missing a full payroll cycle
     if total_late >= 2:
-        salary_deduction += 10
+        salary_score -= 10
     elif total_late == 1:
-        salary_deduction += 5
+        salary_score -= 5
         
     # Cap salary penalty to 30 max points to avoid dropping total score beneath structural zero bound
-    salary_deduction = min(30, salary_deduction)
-    score -= salary_deduction
-    penalties["payroll_stress_penalty"] = -salary_deduction
+    score += salary_score
+    penalties["payroll_stress_penalty"] = 30 - salary_score
 
     # --- FINAL SCORE BOUNDING ---
     final_score = max(0.0, min(100.0, score))
