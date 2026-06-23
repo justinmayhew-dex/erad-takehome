@@ -18,8 +18,6 @@ def analyze_revenue(df: pd.DataFrame):
     total_inflows = float(inflows['amount'].sum())
     total_outflows = float(outflows['amount'].sum())
 
-    print(inflows['date']) 
-
     # Group by month using the index/date
     inflows['month'] = inflows['date'].dt.to_period('M')
     monthly_inflows = inflows.groupby('month')['amount'].sum()
